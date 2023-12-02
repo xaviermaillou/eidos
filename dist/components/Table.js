@@ -55,7 +55,7 @@ var Table = function (_a) {
     if (!data)
         return null;
     var displayedColumns = __spreadArray([], (columns ? columns : extractColumnsFromData(data)), true);
-    return (React.createElement("div", { className: 'table' }, displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column ".concat(i === 0 ? 'start' : '', " ").concat(i === (displayedColumns.length - 1) ? 'end' : '') },
+    return (React.createElement("div", { className: 'table' }, displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column" },
         React.createElement("div", { className: 'header cell' },
             React.createElement("div", { className: 'content' }, column.title)),
         data.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.fieldName] })); }))); })));
