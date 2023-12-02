@@ -1,0 +1,58 @@
+.table {
+    --margin-s: 9px;
+
+    --padding-xs: 4px;
+    --padding-m: 18px;
+    --row-height: 42px;
+
+    --round-s: calc(var(--row-height) / 2);
+    --round-m: calc((var(--row-height) + (2 * var(--padding-xs))) / 2);
+
+    --color-primary: rgb(208, 213, 219);
+    
+    width: 100%;
+    display: flex;
+}
+.table .column {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.table .cell {
+    height: var(--row-height);
+    padding: var(--padding-xs);
+}
+.table .header.cell {
+    font-weight: 600;
+}
+.table .body.cell {
+    background-color: var(--color-primary);
+    margin-top: var(--margin-s);
+}
+.table .cell .content {
+    height: 100%;
+    padding: 0px var(--padding-m);
+    display: flex;
+    align-items: center;
+}
+.table .column:nth-child(2) .cell .content {
+    margin-left: 18px;
+}
+.table .column:first-child .header.cell {
+    opacity: 0;
+}
+.table .column:first-child .body.cell {
+    border-top-left-radius: var(--round-m);
+    border-bottom-left-radius: var(--round-m);
+}
+.table .column:first-child .body.cell .content {
+    background-color: rgb(255, 255, 255);
+    border-radius: var(--round-s);
+    font-weight: 600;
+}
+.table .column:last-child .body.cell {
+    padding-right: var(--row-height);
+    border-top-right-radius: var(--round-m);
+    border-bottom-right-radius: var(--round-m);
+}
