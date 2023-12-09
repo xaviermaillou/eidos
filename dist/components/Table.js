@@ -7,9 +7,89 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { beautifyString } from '../utils/stringHandler';
 import '../styles/table.css';
+var Pagination = function (_a) {
+    var _b, _c;
+    var totalRows = _a.totalRows, size = _a.size, offset = _a.offset, change = _a.change;
+    var _d = useState(null), current = _d[0], setCurrent = _d[1];
+    var first = useState(1)[0];
+    var _e = useState(null), total = _e[0], setTotal = _e[1];
+    var _f = useState({
+        previous: null,
+        next: null
+    }), attenant = _f[0], setAttenant = _f[1];
+    var _g = useState({
+        previous: null,
+        next: null
+    }), missingLinks = _g[0], setMissingLinks = _g[1];
+    useEffect(function () {
+        if (!size)
+            setCurrent(null);
+        else
+            setCurrent((offset + size) / size);
+    }, [size, offset]);
+    useEffect(function () {
+        if (!size)
+            setTotal(null);
+        else
+            setTotal(Math.ceil(Number(totalRows) / size));
+    }, [size, totalRows]);
+    useEffect(function () {
+        var _a, _b;
+        if (current && total) {
+            setAttenant({
+                previous: [
+                    current - 2 > first ? current - 2 : null,
+                    current - 1 > first ? current - 1 : null
+                ],
+                next: [
+                    current + 1 < total ? current + 1 : null,
+                    current + 2 < total ? current + 2 : null
+                ]
+            });
+            setMissingLinks({
+                previous: (_a = (6 - first) - current) !== null && _a !== void 0 ? _a : 0,
+                next: (_b = current - (total - 4)) !== null && _b !== void 0 ? _b : 0
+            });
+        }
+    }, [current, total, first]);
+    var handleClick = function (page) {
+        if (page !== current) {
+            setCurrent(page);
+            change((page - 1) * size);
+        }
+    };
+    if (!totalRows || !total || !current)
+        return React.createElement("div", { className: 'pagination' });
+    return (React.createElement("div", { className: 'pagination' }, (_b = Array(4).fill(null)) === null || _b === void 0 ? void 0 :
+        _b.map(function (el, i) { return (React.createElement("div", { key: "table-pagination-left-space_".concat(i), className: i < Number(missingLinks.previous) ? 'blank open' : 'blank' })); }),
+        React.createElement("div", { onClick: function () { return handleClick(first); }, className: current === first ? 'link current' : 'link clickable' }, first),
+        (Array.isArray(attenant.previous) && Number(attenant.previous[0]) > (first + 1)) &&
+            React.createElement("div", { className: 'link' }, "..."),
+        Array.isArray(attenant.previous) && attenant.previous.map(function (page, i) {
+            if (page) {
+                return (React.createElement("div", { key: "table-pagination-left-element_".concat(i), onClick: function () { return handleClick(page); }, className: 'link clickable' }, page));
+            }
+            else
+                return null;
+        }),
+        (current !== first && current !== total) &&
+            React.createElement("div", { className: 'link current' }, current),
+        Array.isArray(attenant.next) && attenant.next.map(function (page, i) {
+            if (page) {
+                return (React.createElement("div", { key: "table-pagination-right-element_".concat(i), onClick: function () { return handleClick(page); }, className: 'link clickable' }, page));
+            }
+            else
+                return null;
+        }),
+        (Array.isArray(attenant.next) && !!attenant.next[1] && Number(attenant.next[1]) < (total - 1)) &&
+            React.createElement("div", { className: 'link' }, "..."),
+        total > 1 &&
+            React.createElement("div", { onClick: function () { return handleClick(total); }, className: current === total ? 'link current' : 'link clickable' }, total), (_c = Array(4).fill(null)) === null || _c === void 0 ? void 0 :
+        _c.map(function (el, i) { return (React.createElement("div", { key: "table-pagination-right-space_".concat(i), className: i < Number(missingLinks.next) ? 'blank open' : 'blank' })); })));
+};
 var StringCell = function (_a) {
     var value = _a.value;
     return (React.createElement("div", { className: 'content' }, value));
@@ -22,9 +102,14 @@ var BooleanCell = function (_a) {
     var value = _a.value;
     return (React.createElement("div", { className: 'content' }, value ? 'Yes' : 'No'));
 };
+var EmptyCell = function () {
+    return (React.createElement("div", { className: 'content empty' }));
+};
 var Cell = function (_a) {
     var value = _a.value;
-    return (React.createElement("div", { className: 'body cell' }, (function () {
+    if (value === null)
+        return React.createElement("div", { className: 'rows cell empty' });
+    return (React.createElement("div", { className: 'rows cell' }, (function () {
         switch (typeof value) {
             case 'string':
                 return React.createElement(StringCell, { value: value });
@@ -38,26 +123,111 @@ var Cell = function (_a) {
     })()));
 };
 var isPrimitive = function (value) { return (typeof value !== 'object' || value === null) && typeof value !== 'function'; };
-var extractColumnsFromData = function (data) {
-    var extractedColumns = [];
-    data.forEach(function (row) { return Object.entries(row).forEach(function (_a) {
-        var key = _a[0], value = _a[1];
-        if (!extractedColumns.find(function (column) { return column.fieldName === key; }) && isPrimitive(value))
-            extractedColumns.push({
-                title: beautifyString(key),
-                fieldName: key
-            });
-    }); });
-    return extractedColumns;
+var getColumnsWidths = function (data) {
+    var total = 0;
+    var columnWidths = {};
+    var totalLengths = {};
+    Object.keys(data[0]).forEach(function (column) {
+        totalLengths[column] = 0;
+    });
+    data.forEach(function (row) {
+        Object.keys(row).forEach(function (column) {
+            totalLengths[column] += String(row[column]).length;
+        });
+    });
+    Object.values(totalLengths).forEach(function (length) { return total += length; });
+    Object.keys(totalLengths).forEach(function (column) {
+        columnWidths[column] = (totalLengths[column] / total) * 100;
+    });
+    return columnWidths;
 };
 var Table = function (_a) {
-    var data = _a.data, columns = _a.columns;
+    var data = _a.data, isFullData = _a.isFullData, dataTotalElements = _a.dataTotalElements, columns = _a.columns, paginationSetter = _a.paginationSetter, defaultPagination = _a.defaultPagination, sortingSetter = _a.sortingSetter, defaultSorting = _a.defaultSorting;
     if (!data)
         return null;
-    var displayedColumns = __spreadArray([], (columns ? columns : extractColumnsFromData(data)), true);
-    return (React.createElement("div", { className: 'table' }, displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column" },
-        React.createElement("div", { className: 'header cell' },
-            React.createElement("div", { className: 'content' }, column.title)),
-        data.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.fieldName] })); }))); })));
+    var _b = useState(function () { return (isFullData ? [] : data); }), rows = _b[0], setRows = _b[1];
+    var _c = useState(function () { return (isFullData ? data.length : (dataTotalElements || null)); }), totalRows = _c[0], setTotalRows = _c[1];
+    var _d = useState(0), remainingRows = _d[0], setRemainingRows = _d[1];
+    var _e = useState(null), widths = _e[0], setWidths = _e[1];
+    var extractColumnsFromData = function () {
+        var extractedColumns = [];
+        data.forEach(function (row) { return Object.entries(row).forEach(function (_a) {
+            var key = _a[0], value = _a[1];
+            if (!extractedColumns.find(function (column) { return column.field === key; }) && isPrimitive(value))
+                extractedColumns.push({
+                    title: beautifyString(key),
+                    field: key
+                });
+        }); });
+        return extractedColumns;
+    };
+    var displayedColumns = __spreadArray([], (columns ? columns : extractColumnsFromData()), true);
+    var _f = useState(defaultPagination || {
+        offset: 0,
+        size: 10
+    }), pagination = _f[0], setPagination = _f[1];
+    var _g = useState(defaultSorting || {
+        field: displayedColumns[0].field,
+        direction: 'ASC'
+    }), sorting = _g[0], setSorting = _g[1];
+    useEffect(function () {
+        if (!paginationSetter)
+            return;
+        paginationSetter(pagination);
+    }, [pagination]);
+    useEffect(function () {
+        if (!sortingSetter)
+            return;
+        sortingSetter(sorting);
+    }, [sorting]);
+    var sortData = useCallback(function (sorting, pagination) {
+        var dataCopy = __spreadArray([], data, true);
+        var field = sorting.field;
+        var isAsc = sorting.direction === "ASC";
+        var sortedData = dataCopy.sort(function (a, b) {
+            var sample = Number(a[field]);
+            if (!isNaN(sample) && isFinite(sample))
+                return Number((isAsc ? a : b)[field]) - Number((isAsc ? b : a)[field]);
+            else {
+                var first = String((isAsc ? a : b)[field]).toLowerCase();
+                var second = String((isAsc ? b : a)[field]).toLowerCase();
+                if (first < second)
+                    return -1;
+                else if (first > second)
+                    return 1;
+                else
+                    return 0;
+            }
+        });
+        var paginatedData = pagination.size ? sortedData.slice(pagination.offset, pagination.offset + pagination.size) : sortedData;
+        setRows(paginatedData);
+    }, []);
+    useEffect(function () {
+        if (isFullData)
+            sortData(sorting, pagination);
+    }, [isFullData, sortData, pagination, sorting]);
+    var changePage = function (offset) {
+        setPagination({
+            size: pagination.size,
+            offset: offset
+        });
+    };
+    useEffect(function () {
+        if (rows.length === 0)
+            return;
+        setWidths(getColumnsWidths(rows));
+        setRemainingRows(pagination.size - rows.length);
+    }, [rows]);
+    return (React.createElement("div", { className: 'table' },
+        React.createElement("div", { className: 'body' }, displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column", style: {
+                width: "".concat(widths ? widths[column.field] : (100 / displayedColumns.length), "%"),
+                // 12px = letter width; 36px = lateral padding (18px) * 2
+                minWidth: (column.title.length * 12) + 36
+            } },
+            React.createElement("div", { className: 'header cell' },
+                React.createElement("div", { className: 'content' }, column.title)),
+            rows.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.field] })); }),
+            Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(remainingRows - j), value: null })); }))); })),
+        React.createElement(Pagination, { totalRows: totalRows, size: pagination.size, offset: pagination.offset, change: changePage })));
 };
 export default Table;

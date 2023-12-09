@@ -1,3 +1,6 @@
+.clickable {
+    cursor: pointer;
+}
 .table {
     --margin-s: 9px;
 
@@ -9,14 +12,32 @@
     --round-m: calc((var(--row-height) + (2 * var(--padding-xs))) / 2);
 
     --color-primary: rgb(208, 213, 219);
+
+    --font-size-m: 13px;
+    --font-size-l: 16px;
+
+    --font-weight-s: 300;
+    --font-weight-m: 500;
+    --font-weight-l: 800;
     
+    font-size: var(--font-size-m);
+    font-weight: var(--font-weight-m);
+}
+.table .body {
     width: 100%;
     display: flex;
 }
 .table .column {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    border-top-left-radius: var(--round-m);
+    border-top-right-radius: var(--round-m);
+    transition: width 0.2s;
+}
+
+.table .column:nth-child(3) {
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
 }
 
 .table .cell {
@@ -24,9 +45,11 @@
     padding: var(--padding-xs);
 }
 .table .header.cell {
-    font-weight: 600;
+    color: var(--color-primary);
+    font-size: var(--font-size-l);
+    font-weight: var(--font-weight-l);
 }
-.table .body.cell {
+.table .rows.cell {
     background-color: var(--color-primary);
     margin-top: var(--margin-s);
 }
@@ -42,17 +65,51 @@
 .table .column:first-child .header.cell {
     opacity: 0;
 }
-.table .column:first-child .body.cell {
+.table .column:first-child .rows.cell {
     border-top-left-radius: var(--round-m);
     border-bottom-left-radius: var(--round-m);
 }
-.table .column:first-child .body.cell .content {
+.table .column:first-child .rows.cell .content {
     background-color: rgb(255, 255, 255);
     border-radius: var(--round-s);
-    font-weight: 600;
+    font-weight: var(--font-weight-l);
+    justify-content: center;
+    text-align: center;
 }
-.table .column:last-child .body.cell {
+.table .column:last-child .rows.cell {
     padding-right: var(--row-height);
     border-top-right-radius: var(--round-m);
     border-bottom-right-radius: var(--round-m);
+}
+.table .rows.cell.empty {
+    pointer-events: none;
+    opacity: 0;
+}
+
+.table .pagination {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.table .pagination .link {
+    height: 24px;
+    width: 24px;
+    margin: 0px 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.table .pagination .current {
+    border-top: 2px solid black;
+    border-bottom: 2px solid transparent;
+}
+.table .pagination .blank {
+    width: 0px;
+    margin: 0px 0px;
+    transition: width 0.2s, margin 0.2s;
+}
+.table .pagination .blank.open {
+    width: 24px;
+    margin: 0px 4px;
 }
