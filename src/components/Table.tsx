@@ -153,12 +153,6 @@ const BooleanCell: React.FC<{ value: boolean }> = ({ value }) => {
     )
 }
 
-const EmptyCell: React.FC = () => {
-    return (
-        <div className='content empty' />
-    )
-}
-
 const Cell: React.FC<{ value: string | number | boolean | null }> = ({ value }) => {
 
     if (value === null) return <div className='rows cell empty' />
@@ -300,11 +294,28 @@ const Table: React.FC<{
         if (isFullData) sortData(sorting, pagination)
     }, [isFullData, sortData, pagination, sorting])
 
-    const changePage = (offset: number) => {
+    const changePage = (offset: number): void => {
         setPagination({
             size: pagination.size,
             offset: offset
         })
+    }
+
+    const changeSorting = (field: string, direction: "ASC" | "DESC"): void => {
+        setPagination({
+            size: pagination.size,
+            offset: 0
+        })
+        if (field === sorting.field && direction === sorting.direction)
+            setSorting(defaultSorting || {
+                field: displayedColumns[0].field,
+                direction: 'ASC'
+            })
+        else
+            setSorting({
+                field,
+                direction
+            })
     }
     
     useEffect(() => {
@@ -321,13 +332,25 @@ const Table: React.FC<{
                         key={i}
                         className="column"
                         style={{
-                            width: `${widths ? widths[column.field] : (100 / displayedColumns.length)}%`,
-                            // 12px = letter width; 36px = lateral padding (18px) * 2
-                            minWidth: (column.title.length * 12) + 36
+                            width: `calc(${widths ? widths[column.field] : (100 / displayedColumns.length)}% + ${i === 0 ? 18 : 0}px)`,
+                            // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
+                            minWidth: (column.title.length * 12) + 36 + 42
                         }}
                     >
                         <div className='header cell'>
-                            <div className='content'>{column.title}</div>
+                            <div className='content'>
+                                {column.title}
+                                <div className='icons'>
+                                    <i
+                                        className={(sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : ''}
+                                        onClick={() => changeSorting(column.field, "ASC")}
+                                    >&#9650;</i>
+                                    <i
+                                        className={(sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : ''}
+                                        onClick={() => changeSorting(column.field, "DESC")}
+                                    >&#9660;</i>
+                                </div>
+                            </div>
                         </div>
                         {rows.map((row, j) => (
                             <Cell key={`${i}-${j}`} value={row[column.field]} />
@@ -337,6 +360,15 @@ const Table: React.FC<{
                         ))}
                     </div>
                 ))}
+                <div className="column">
+                    <div className='header cell' />
+                    {rows.map((row, j) => (
+                        <Cell key={`extra-cell-${j}`} value={''} />
+                    ))}
+                    {Array(remainingRows).fill(null).map((row, j) => (
+                        <Cell key={`extra-cell-${remainingRows - j}`} value={null} />
+                    ))}
+                </div>
             </div>
             <Pagination
                 totalRows={totalRows}

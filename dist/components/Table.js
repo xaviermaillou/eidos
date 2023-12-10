@@ -102,9 +102,6 @@ var BooleanCell = function (_a) {
     var value = _a.value;
     return (React.createElement("div", { className: 'content' }, value ? 'Yes' : 'No'));
 };
-var EmptyCell = function () {
-    return (React.createElement("div", { className: 'content empty' }));
-};
 var Cell = function (_a) {
     var value = _a.value;
     if (value === null)
@@ -212,6 +209,22 @@ var Table = function (_a) {
             offset: offset
         });
     };
+    var changeSorting = function (field, direction) {
+        setPagination({
+            size: pagination.size,
+            offset: 0
+        });
+        if (field === sorting.field && direction === sorting.direction)
+            setSorting(defaultSorting || {
+                field: displayedColumns[0].field,
+                direction: 'ASC'
+            });
+        else
+            setSorting({
+                field: field,
+                direction: direction
+            });
+    };
     useEffect(function () {
         if (rows.length === 0)
             return;
@@ -219,15 +232,24 @@ var Table = function (_a) {
         setRemainingRows(pagination.size - rows.length);
     }, [rows]);
     return (React.createElement("div", { className: 'table' },
-        React.createElement("div", { className: 'body' }, displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column", style: {
-                width: "".concat(widths ? widths[column.field] : (100 / displayedColumns.length), "%"),
-                // 12px = letter width; 36px = lateral padding (18px) * 2
-                minWidth: (column.title.length * 12) + 36
-            } },
-            React.createElement("div", { className: 'header cell' },
-                React.createElement("div", { className: 'content' }, column.title)),
-            rows.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.field] })); }),
-            Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(remainingRows - j), value: null })); }))); })),
+        React.createElement("div", { className: 'body' },
+            displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column", style: {
+                    width: "calc(".concat(widths ? widths[column.field] : (100 / displayedColumns.length), "% + ").concat(i === 0 ? 18 : 0, "px)"),
+                    // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
+                    minWidth: (column.title.length * 12) + 36 + 42
+                } },
+                React.createElement("div", { className: 'header cell' },
+                    React.createElement("div", { className: 'content' },
+                        column.title,
+                        React.createElement("div", { className: 'icons' },
+                            React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "ASC"); } }, "\u25B2"),
+                            React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "DESC"); } }, "\u25BC")))),
+                rows.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.field] })); }),
+                Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(remainingRows - j), value: null })); }))); }),
+            React.createElement("div", { className: "column" },
+                React.createElement("div", { className: 'header cell' }),
+                rows.map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(j), value: '' })); }),
+                Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(remainingRows - j), value: null })); }))),
         React.createElement(Pagination, { totalRows: totalRows, size: pagination.size, offset: pagination.offset, change: changePage })));
 };
 export default Table;
