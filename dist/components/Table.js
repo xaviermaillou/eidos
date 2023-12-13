@@ -159,12 +159,13 @@ var Table = function (_a) {
         return extractedColumns;
     };
     var displayedColumns = __spreadArray([], (columns ? columns : extractColumnsFromData()), true);
+    var firstColumn = displayedColumns.shift();
     var _f = useState(defaultPagination || {
         offset: 0,
         size: 10
     }), pagination = _f[0], setPagination = _f[1];
     var _g = useState(defaultSorting || {
-        field: displayedColumns[0].field,
+        field: firstColumn.field,
         direction: 'ASC'
     }), sorting = _g[0], setSorting = _g[1];
     useEffect(function () {
@@ -216,7 +217,7 @@ var Table = function (_a) {
         });
         if (field === sorting.field && direction === sorting.direction)
             setSorting(defaultSorting || {
-                field: displayedColumns[0].field,
+                field: firstColumn.field,
                 direction: 'ASC'
             });
         else
@@ -233,23 +234,42 @@ var Table = function (_a) {
     }, [rows]);
     return (React.createElement("div", { className: 'table' },
         React.createElement("div", { className: 'body' },
-            displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column", style: {
-                    width: "calc(".concat(widths ? widths[column.field] : (100 / displayedColumns.length), "% + ").concat(i === 0 ? 18 : 0, "px)"),
-                    // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
-                    minWidth: (column.title.length * 12) + 36 + 42
-                } },
-                React.createElement("div", { className: 'header cell' },
-                    React.createElement("div", { className: 'content' },
-                        column.title,
-                        React.createElement("div", { className: 'icons' },
-                            React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "ASC"); } }, "\u25B2"),
-                            React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "DESC"); } }, "\u25BC")))),
-                rows.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.field] })); }),
-                Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(remainingRows - j), value: null })); }))); }),
-            React.createElement("div", { className: "column" },
-                React.createElement("div", { className: 'header cell' }),
-                rows.map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(j), value: '' })); }),
-                Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(remainingRows - j), value: null })); }))),
+            React.createElement("div", { className: 'group header' },
+                React.createElement("div", { className: "column", style: {
+                        width: "calc(".concat(widths ? widths[firstColumn.field] : (100 / displayedColumns.length), "% + 10px)"),
+                        // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
+                        minWidth: (firstColumn.title.length * 12) + 36 + 42
+                    } },
+                    React.createElement("div", { className: 'header cell' },
+                        React.createElement("div", { className: 'content' },
+                            firstColumn.title,
+                            React.createElement("div", { className: 'icons' },
+                                React.createElement("i", { className: (sorting.field === firstColumn.field && sorting.direction === "ASC") ? 'selected' : '', onClick: function () { return changeSorting(firstColumn.field, "ASC"); } }, "\u25B2"),
+                                React.createElement("i", { className: (sorting.field === firstColumn.field && sorting.direction === "DESC") ? 'selected' : '', onClick: function () { return changeSorting(firstColumn.field, "DESC"); } }, "\u25BC")))),
+                    rows.map(function (row, j) { return (React.createElement(Cell, { key: "0-".concat(j), value: row[firstColumn.field] })); }),
+                    Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "0-".concat(remainingRows - j), value: null })); }))),
+            React.createElement("div", { className: 'group' },
+                React.createElement("div", { className: "column" },
+                    React.createElement("div", { className: 'header cell' }),
+                    rows.map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(j), value: '' })); }),
+                    Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(remainingRows - j), value: null })); })),
+                displayedColumns.map(function (column, i) { return (React.createElement("div", { key: i, className: "column", style: {
+                        width: "".concat(widths ? widths[column.field] : (100 / displayedColumns.length), "%"),
+                        // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
+                        minWidth: (column.title.length * 12) + 36 + 42
+                    } },
+                    React.createElement("div", { className: 'header cell' },
+                        React.createElement("div", { className: 'content' },
+                            column.title,
+                            React.createElement("div", { className: 'icons' },
+                                React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "ASC"); } }, "\u25B2"),
+                                React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "DESC"); } }, "\u25BC")))),
+                    rows.map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(j), value: row[column.field] })); }),
+                    Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "".concat(i, "-").concat(remainingRows - j), value: null })); }))); }),
+                React.createElement("div", { className: "column" },
+                    React.createElement("div", { className: 'header cell' }),
+                    rows.map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(j), value: '' })); }),
+                    Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(remainingRows - j), value: null })); })))),
         React.createElement(Pagination, { totalRows: totalRows, size: pagination.size, offset: pagination.offset, change: changePage })));
 };
 export default Table;

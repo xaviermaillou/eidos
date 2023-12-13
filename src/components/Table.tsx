@@ -245,6 +245,7 @@ const Table: React.FC<{
     }
 
     const displayedColumns: TableTypes.Columns = [...(columns ? columns : extractColumnsFromData())]
+    const firstColumn = displayedColumns.shift() as TableTypes.Column
 
     const [pagination, setPagination] = useState<TableTypes.Pagination>(defaultPagination || {
         offset: 0,
@@ -252,7 +253,7 @@ const Table: React.FC<{
     })
     
     const [sorting, setSorting] = useState<TableTypes.Sorting>(defaultSorting || {
-        field: displayedColumns[0].field,
+        field: firstColumn.field,
         direction: 'ASC'
     })
 
@@ -308,7 +309,7 @@ const Table: React.FC<{
         })
         if (field === sorting.field && direction === sorting.direction)
             setSorting(defaultSorting || {
-                field: displayedColumns[0].field,
+                field: firstColumn.field,
                 direction: 'ASC'
             })
         else
@@ -327,47 +328,90 @@ const Table: React.FC<{
     return (
         <div className='table'>
             <div className='body'>
-                {displayedColumns.map((column, i) => (
+                <div className='group header'>
                     <div
-                        key={i}
                         className="column"
                         style={{
-                            width: `calc(${widths ? widths[column.field] : (100 / displayedColumns.length)}% + ${i === 0 ? 18 : 0}px)`,
+                            width: `calc(${widths ? widths[firstColumn.field] : (100 / displayedColumns.length)}% + 10px)`,
                             // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
-                            minWidth: (column.title.length * 12) + 36 + 42
+                            minWidth: (firstColumn.title.length * 12) + 36 + 42
                         }}
                     >
                         <div className='header cell'>
                             <div className='content'>
-                                {column.title}
+                                {firstColumn.title}
                                 <div className='icons'>
                                     <i
-                                        className={(sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : ''}
-                                        onClick={() => changeSorting(column.field, "ASC")}
+                                        className={(sorting.field === firstColumn.field && sorting.direction === "ASC") ? 'selected' : ''}
+                                        onClick={() => changeSorting(firstColumn.field, "ASC")}
                                     >&#9650;</i>
                                     <i
-                                        className={(sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : ''}
-                                        onClick={() => changeSorting(column.field, "DESC")}
+                                        className={(sorting.field === firstColumn.field && sorting.direction === "DESC") ? 'selected' : ''}
+                                        onClick={() => changeSorting(firstColumn.field, "DESC")}
                                     >&#9660;</i>
                                 </div>
                             </div>
                         </div>
                         {rows.map((row, j) => (
-                            <Cell key={`${i}-${j}`} value={row[column.field]} />
+                            <Cell key={`0-${j}`} value={row[firstColumn.field]} />
                         ))}
                         {Array(remainingRows).fill(null).map((row, j) => (
-                            <Cell key={`${i}-${remainingRows - j}`} value={null} />
+                            <Cell key={`0-${remainingRows - j}`} value={null} />
                         ))}
                     </div>
-                ))}
-                <div className="column">
-                    <div className='header cell' />
-                    {rows.map((row, j) => (
-                        <Cell key={`extra-cell-${j}`} value={''} />
+                </div>
+                <div className='group'>
+                    <div className="column">
+                        <div className='header cell' />
+                        {rows.map((row, j) => (
+                            <Cell key={`extra-cell-${j}`} value={''} />
+                        ))}
+                        {Array(remainingRows).fill(null).map((row, j) => (
+                            <Cell key={`extra-cell-${remainingRows - j}`} value={null} />
+                        ))}
+                    </div>
+                    {displayedColumns.map((column, i) => (
+                        <div
+                            key={i}
+                            className="column"
+                            style={{
+                                width: `${widths ? widths[column.field] : (100 / displayedColumns.length)}%`,
+                                // 12px = letter width; 36px = lateral padding (18px) * 2; 42px = icons
+                                minWidth: (column.title.length * 12) + 36 + 42
+                            }}
+                        >
+                            <div className='header cell'>
+                                <div className='content'>
+                                    {column.title}
+                                    <div className='icons'>
+                                        <i
+                                            className={(sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : ''}
+                                            onClick={() => changeSorting(column.field, "ASC")}
+                                        >&#9650;</i>
+                                        <i
+                                            className={(sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : ''}
+                                            onClick={() => changeSorting(column.field, "DESC")}
+                                        >&#9660;</i>
+                                    </div>
+                                </div>
+                            </div>
+                            {rows.map((row, j) => (
+                                <Cell key={`${i}-${j}`} value={row[column.field]} />
+                            ))}
+                            {Array(remainingRows).fill(null).map((row, j) => (
+                                <Cell key={`${i}-${remainingRows - j}`} value={null} />
+                            ))}
+                        </div>
                     ))}
-                    {Array(remainingRows).fill(null).map((row, j) => (
-                        <Cell key={`extra-cell-${remainingRows - j}`} value={null} />
-                    ))}
+                    <div className="column">
+                        <div className='header cell' />
+                        {rows.map((row, j) => (
+                            <Cell key={`extra-cell-${j}`} value={''} />
+                        ))}
+                        {Array(remainingRows).fill(null).map((row, j) => (
+                            <Cell key={`extra-cell-${remainingRows - j}`} value={null} />
+                        ))}
+                    </div>
                 </div>
             </div>
             <Pagination
