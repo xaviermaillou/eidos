@@ -1,4 +1,4 @@
-type Row = {
+export type Row = {
     [key: string]: string | number | boolean;
 }
 
@@ -19,6 +19,11 @@ export type Pagination = {
 export type Sorting = {
     field: string,
     direction: 'ASC' | 'DESC'
+}
+
+export type Filtering = {
+    field: string | null,
+    value: string
 }
 
 export type PageLinks = {

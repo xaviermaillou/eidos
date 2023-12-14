@@ -268,12 +268,6 @@ const Table: React.FC<{
 }) => {
     if (!data) return null
     
-    const [rows, setRows] = useState<TableTypes.Data>(() => (isFullData ? [] : data))
-    const [totalRows, setTotalRows] = useState<number | null>(() => (isFullData ? data.length : (dataTotalElements || null)))
-    const [remainingRows, setRemainingRows] = useState<number>(0)
-
-    const [widths, setWidths] = useState<Record<string, number> | null>(null)
-
     const extractColumnsFromData: () => TableTypes.Columns = () => {
         const extractedColumns: TableTypes.Columns = []
         data.forEach(row => Object.entries(row).forEach(([key, value]) => {
@@ -289,6 +283,27 @@ const Table: React.FC<{
     const displayedColumns: TableTypes.Columns = [...(columns ? columns : extractColumnsFromData())]
     const firstColumn = displayedColumns.shift() as TableTypes.Column
 
+    const cleanData: (data: TableTypes.Data) => TableTypes.Data = useCallback((data) => {
+        return [ ...data ].map((row) => {
+            const cleanRow: Record<string, any> = {}
+            const firstField = firstColumn.field
+            if (row.hasOwnProperty(firstField))
+                cleanRow[firstField] = row[firstField]
+            displayedColumns.forEach((column) => {
+                const field = column.field
+                if (row.hasOwnProperty(field))
+                    cleanRow[field] = row[field]
+            })
+            return cleanRow
+        })
+    }, [])
+
+    const [rows, setRows] = useState<TableTypes.Data>(() => (isFullData ? [] : cleanData(data)))
+    const [totalRows, setTotalRows] = useState<number | null>(() => (isFullData ? data.length : (dataTotalElements || null)))
+    const [remainingRows, setRemainingRows] = useState<number>(0)
+
+    const [widths, setWidths] = useState<Record<string, number> | null>(null)
+
     const [pagination, setPagination] = useState<TableTypes.Pagination>(defaultPagination || {
         offset: 0,
         size: 10
@@ -297,6 +312,11 @@ const Table: React.FC<{
     const [sorting, setSorting] = useState<TableTypes.Sorting>(defaultSorting || {
         field: firstColumn.field,
         direction: 'ASC'
+    })
+
+    const [filtering, setFiltering] = useState<TableTypes.Filtering>({
+        field: null,
+        value: ''
     })
 
     useEffect(() => {
@@ -309,11 +329,21 @@ const Table: React.FC<{
         sortingSetter(sorting)
     }, [sorting])
 
-    const sortData: (sorting: TableTypes.Sorting, pagination: TableTypes.Pagination) => void = useCallback((sorting, pagination) => {
+    const sortData: (
+        filtering:TableTypes.Filtering,
+        sorting: TableTypes.Sorting,
+        pagination: TableTypes.Pagination
+    ) => void = useCallback((
+        filtering,
+        sorting,
+        pagination
+    ) => {
         const dataCopy = [ ...data ]
 
-        // Local filtering is handled here
-        const filteredData = dataCopy
+        const filteredData = filtering.field ?
+            dataCopy.filter((row) => (row[filtering.field as keyof TableTypes.Row] as string)?.toLowerCase().includes(filtering.value.toLowerCase()))
+            :
+            dataCopy
         setTotalRows(filteredData.length)
 
         const field = sorting.field
@@ -334,12 +364,12 @@ const Table: React.FC<{
 
         const paginatedData = pagination.size ? sortedData.slice(pagination.offset, pagination.offset + pagination.size) : sortedData
 
-        setRows(paginatedData)
+        setRows(cleanData(paginatedData))
     }, [])
 
     useEffect(() => {
-        if (isFullData) sortData(sorting, pagination)
-    }, [isFullData, sortData, pagination, sorting])
+        if (isFullData) sortData(filtering, sorting, pagination)
+    }, [isFullData, sortData, pagination, sorting, filtering])
 
     const changePage = (offset: number): void => {
         setPagination({
@@ -385,7 +415,14 @@ const Table: React.FC<{
                     >
                         <div className='header cell'>
                             <div className='content'>
-                                {firstColumn.title}
+                                <TextInput
+                                    value={filtering.field === firstColumn.field ? filtering.value : ''}
+                                    setValue={(value) => setFiltering({
+                                        field: !!value ? firstColumn.field : null,
+                                        value: value
+                                    })}
+                                    label={firstColumn.title}
+                                />
                                 <div className='icons'>
                                     <i
                                         className={(sorting.field === firstColumn.field && sorting.direction === "ASC") ? 'selected' : ''}
@@ -428,7 +465,14 @@ const Table: React.FC<{
                         >
                             <div className='header cell'>
                                 <div className='content'>
-                                    {column.title}
+                                    <TextInput
+                                        value={filtering.field === column.field ? filtering.value : ''}
+                                        setValue={(value) => setFiltering({
+                                            field: !!value ? column.field : null,
+                                            value: value
+                                        })}
+                                        label={column.title}
+                                    />
                                     <div className='icons'>
                                         <i
                                             className={(sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : ''}
@@ -466,6 +510,25 @@ const Table: React.FC<{
                 offset={pagination.offset}
                 change={changePage}
             />
+        </div>
+    )
+}
+
+// TODO: extract the following component in form folder later
+
+const TextInput: React.FC<{
+    value: string,
+    setValue: (value: string) => void,
+    label: string
+}> = ({
+    value,
+    setValue,
+    label
+}) => {
+    return (
+        <div className={`input${!!value ? ' active' : ''}`}>
+            <span className='label'>{label}</span>
+            <input value={value} onChange={(e) => setValue(e.target.value)} />
         </div>
     )
 }

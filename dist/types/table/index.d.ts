@@ -1,4 +1,4 @@
-type Row = {
+export type Row = {
     [key: string]: string | number | boolean;
 };
 export interface Data extends Array<Row> {
@@ -17,8 +17,11 @@ export type Sorting = {
     field: string;
     direction: 'ASC' | 'DESC';
 };
+export type Filtering = {
+    field: string | null;
+    value: string;
+};
 export type PageLinks = {
     previous: Array<number | null> | number | null;
     next: Array<number | null> | number | null;
 };
-export {};

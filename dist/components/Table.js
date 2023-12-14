@@ -181,10 +181,6 @@ var Table = function (_a) {
     var data = _a.data, isFullData = _a.isFullData, dataTotalElements = _a.dataTotalElements, columns = _a.columns, paginationSetter = _a.paginationSetter, defaultPagination = _a.defaultPagination, sortingSetter = _a.sortingSetter, defaultSorting = _a.defaultSorting;
     if (!data)
         return null;
-    var _b = useState(function () { return (isFullData ? [] : data); }), rows = _b[0], setRows = _b[1];
-    var _c = useState(function () { return (isFullData ? data.length : (dataTotalElements || null)); }), totalRows = _c[0], setTotalRows = _c[1];
-    var _d = useState(0), remainingRows = _d[0], setRemainingRows = _d[1];
-    var _e = useState(null), widths = _e[0], setWidths = _e[1];
     var extractColumnsFromData = function () {
         var extractedColumns = [];
         data.forEach(function (row) { return Object.entries(row).forEach(function (_a) {
@@ -199,6 +195,24 @@ var Table = function (_a) {
     };
     var displayedColumns = __spreadArray([], (columns ? columns : extractColumnsFromData()), true);
     var firstColumn = displayedColumns.shift();
+    var cleanData = useCallback(function (data) {
+        return __spreadArray([], data, true).map(function (row) {
+            var cleanRow = {};
+            var firstField = firstColumn.field;
+            if (row.hasOwnProperty(firstField))
+                cleanRow[firstField] = row[firstField];
+            displayedColumns.forEach(function (column) {
+                var field = column.field;
+                if (row.hasOwnProperty(field))
+                    cleanRow[field] = row[field];
+            });
+            return cleanRow;
+        });
+    }, []);
+    var _b = useState(function () { return (isFullData ? [] : cleanData(data)); }), rows = _b[0], setRows = _b[1];
+    var _c = useState(function () { return (isFullData ? data.length : (dataTotalElements || null)); }), totalRows = _c[0], setTotalRows = _c[1];
+    var _d = useState(0), remainingRows = _d[0], setRemainingRows = _d[1];
+    var _e = useState(null), widths = _e[0], setWidths = _e[1];
     var _f = useState(defaultPagination || {
         offset: 0,
         size: 10
@@ -207,6 +221,10 @@ var Table = function (_a) {
         field: firstColumn.field,
         direction: 'ASC'
     }), sorting = _g[0], setSorting = _g[1];
+    var _h = useState({
+        field: null,
+        value: ''
+    }), filtering = _h[0], setFiltering = _h[1];
     useEffect(function () {
         if (!paginationSetter)
             return;
@@ -217,10 +235,12 @@ var Table = function (_a) {
             return;
         sortingSetter(sorting);
     }, [sorting]);
-    var sortData = useCallback(function (sorting, pagination) {
+    var sortData = useCallback(function (filtering, sorting, pagination) {
         var dataCopy = __spreadArray([], data, true);
-        // Local filtering is handled here
-        var filteredData = dataCopy;
+        var filteredData = filtering.field ?
+            dataCopy.filter(function (row) { var _a; return (_a = row[filtering.field]) === null || _a === void 0 ? void 0 : _a.toLowerCase().includes(filtering.value.toLowerCase()); })
+            :
+                dataCopy;
         setTotalRows(filteredData.length);
         var field = sorting.field;
         var isAsc = sorting.direction === "ASC";
@@ -240,12 +260,12 @@ var Table = function (_a) {
             }
         });
         var paginatedData = pagination.size ? sortedData.slice(pagination.offset, pagination.offset + pagination.size) : sortedData;
-        setRows(paginatedData);
+        setRows(cleanData(paginatedData));
     }, []);
     useEffect(function () {
         if (isFullData)
-            sortData(sorting, pagination);
-    }, [isFullData, sortData, pagination, sorting]);
+            sortData(filtering, sorting, pagination);
+    }, [isFullData, sortData, pagination, sorting, filtering]);
     var changePage = function (offset) {
         setPagination({
             size: pagination.size,
@@ -284,7 +304,10 @@ var Table = function (_a) {
                     } },
                     React.createElement("div", { className: 'header cell' },
                         React.createElement("div", { className: 'content' },
-                            firstColumn.title,
+                            React.createElement(TextInput, { value: filtering.field === firstColumn.field ? filtering.value : '', setValue: function (value) { return setFiltering({
+                                    field: !!value ? firstColumn.field : null,
+                                    value: value
+                                }); }, label: firstColumn.title }),
                             React.createElement("div", { className: 'icons' },
                                 React.createElement("i", { className: (sorting.field === firstColumn.field && sorting.direction === "ASC") ? 'selected' : '', onClick: function () { return changeSorting(firstColumn.field, "ASC"); } }, "\u25B2"),
                                 React.createElement("i", { className: (sorting.field === firstColumn.field && sorting.direction === "DESC") ? 'selected' : '', onClick: function () { return changeSorting(firstColumn.field, "DESC"); } }, "\u25BC")))),
@@ -302,7 +325,10 @@ var Table = function (_a) {
                     } },
                     React.createElement("div", { className: 'header cell' },
                         React.createElement("div", { className: 'content' },
-                            column.title,
+                            React.createElement(TextInput, { value: filtering.field === column.field ? filtering.value : '', setValue: function (value) { return setFiltering({
+                                    field: !!value ? column.field : null,
+                                    value: value
+                                }); }, label: column.title }),
                             React.createElement("div", { className: 'icons' },
                                 React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "ASC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "ASC"); } }, "\u25B2"),
                                 React.createElement("i", { className: (sorting.field === column.field && sorting.direction === "DESC") ? 'selected' : '', onClick: function () { return changeSorting(column.field, "DESC"); } }, "\u25BC")))),
@@ -313,5 +339,12 @@ var Table = function (_a) {
                     rows.map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(j), value: '' })); }),
                     Array(remainingRows).fill(null).map(function (row, j) { return (React.createElement(Cell, { key: "extra-cell-".concat(remainingRows - j), value: null })); })))),
         React.createElement(Pagination, { totalRows: totalRows, size: pagination.size, offset: pagination.offset, change: changePage })));
+};
+// TODO: extract the following component in form folder later
+var TextInput = function (_a) {
+    var value = _a.value, setValue = _a.setValue, label = _a.label;
+    return (React.createElement("div", { className: "input".concat(!!value ? ' active' : '') },
+        React.createElement("span", { className: 'label' }, label),
+        React.createElement("input", { value: value, onChange: function (e) { return setValue(e.target.value); } })));
 };
 export default Table;

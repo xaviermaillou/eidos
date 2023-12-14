@@ -11,9 +11,11 @@
     --round-s: calc(var(--row-height) / 2);
     --round-m: calc((var(--row-height) + (2 * var(--padding-xs))) / 2);
 
+    --color-strong: rgb(190, 195, 200);
     --color-primary: rgb(208, 213, 219);
     --color-secondary: rgb(218, 222, 230);
 
+    --font-size-s: 10px;
     --font-size-m: 13px;
     --font-size-l: 16px;
 
@@ -66,33 +68,30 @@
 .table .icons i {
     cursor: pointer;
 }
-.table .header.cell {
-    color: var(--color-primary);
-    font-size: var(--font-size-l);
-    font-weight: var(--font-weight-l);
+.table .cell.header {
     pointer-events: auto;
 }
-.table .header.cell .icons {
+.table .cell.header .icons {
     padding-left: var(--padding-m);
 }
-.table .header.cell .icons i {
+.table .cell.header .icons i {
     opacity: 0;
     transition: opacity 0.4s;
 }
-.table .header.cell:hover .icons i {
-    opacity: 0.5;
+.table .cell.header:hover .icons i {
+    opacity: 0.2;
 }
-.table .header.cell:hover .icons i:hover {
-    opacity: 0.75;
+.table .cell.header:hover .icons i:hover {
+    opacity: 0.25;
 }
-.table .header.cell .icons i.selected {
-    opacity: 1;
+.table .cell.header .icons i.selected {
+    opacity: 0.3;
 }
 .table .rows.cell {
     background-color: var(--color-secondary);
     margin-top: var(--margin-s);
 }
-.table .header.cell .content {
+.table .cell.header .content {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -110,9 +109,9 @@
 .table .cell .content a {
     pointer-events: auto;
 }
-.table .group.header .cell.header {
+.table .group.header .cell.header:not(:focus-within) {
     opacity: 0;
-    transition: 0.4s;
+    transition: opacity 0.4s;
 }
 .table .group.header .cell.header:hover {
     opacity: 1;
@@ -164,4 +163,32 @@
 .table .pagination .blank.open {
     width: 24px;
     margin: 0px 4px;
+}
+
+.input {
+    position: relative;
+}
+.input .label {
+    position: absolute;
+    top: 0px;
+    color: var(--color-primary);
+    font-size: var(--font-size-l);
+    font-weight: var(--font-weight-l);
+    pointer-events: none;
+    transition: top 0.2s, color 0.2s, font-size 0.2s;
+}
+.input:focus-within .label, .input.active .label {
+    top: -12px;
+    color: var(--color-strong);
+    font-size: var(--font-size-s);
+}
+.input input {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid transparent;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.input:hover input, .input.active input, input:focus {
+    border-color: var(--color-strong);
 }
