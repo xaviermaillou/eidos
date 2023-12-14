@@ -138,6 +138,13 @@ const StringCell: React.FC<{ value: string }> = ({ value }) => {
         </div>
     )
 }
+const UrlCell: React.FC<{ value: string }> = ({ value }) => {
+    return (
+        <div className='content'>
+            <a href={value}>LINK</a>
+        </div>
+    )
+}
 const NumberCell: React.FC<{ value: number }> = ({ value }) => {
     return (
         <div className='content'>
@@ -148,7 +155,7 @@ const NumberCell: React.FC<{ value: number }> = ({ value }) => {
 const BooleanCell: React.FC<{ value: boolean }> = ({ value }) => {
     return (
         <div className='content'>
-            {value ? 'Yes' : 'No'}
+            {value ? '✓' : 'x'}
         </div>
     )
 }
@@ -156,18 +163,34 @@ const BooleanCell: React.FC<{ value: boolean }> = ({ value }) => {
 const Cell: React.FC<{ value: string | number | boolean | null }> = ({ value }) => {
 
     if (value === null) return <div className='rows cell empty' />
+
+    let type: string = typeof value
+    let improvedValue = value
+    if (type === 'string') {
+        if (isUrl(value as string)) type = 'url'
+        if (isBoolean(value as string)) {
+            type = 'boolean'
+            for (const key in potentialBooleans) {
+                if (potentialBooleans[key].includes(value as string)) {
+                    improvedValue = !!key
+                }
+              }
+        }
+    }
     
     return (
         <div className='rows cell'>
             {
                 (() => {
-                    switch (typeof value) {
+                    switch (type) {
                         case 'string':
-                        return <StringCell value={value} />
+                        return <StringCell value={improvedValue as string} />
+                        case 'url':
+                        return <UrlCell value={improvedValue as string} />
                         case 'number':
-                        return <NumberCell value={value} />
+                        return <NumberCell value={improvedValue as number} />
                         case 'boolean':
-                        return <BooleanCell value={value} />
+                        return <BooleanCell value={improvedValue as boolean} />
                         default:
                         return null
                     }
@@ -178,6 +201,12 @@ const Cell: React.FC<{ value: string | number | boolean | null }> = ({ value }) 
 }
 
 const isPrimitive = (value: any) => (typeof value !== 'object' || value === null) && typeof value !== 'function'
+const isUrl = (value: string) => (/^(ftp|http|https):\/\/[^ "]+$/.test(value))
+const potentialBooleans: Record<string, Array<string>> = {
+    1: ['true', 'yes', 'affirmative'],
+    0: ['false', 'no', 'not', 'negative']
+}
+const isBoolean = (value: string) => ([...potentialBooleans[1], ...potentialBooleans[0]].includes(value.toLowerCase()))
 
 const getColumnsWidths = (data: TableTypes.Data): Record<string, number> => {    
     let total: number = 0
@@ -270,9 +299,13 @@ const Table: React.FC<{
     const sortData: (sorting: TableTypes.Sorting, pagination: TableTypes.Pagination) => void = useCallback((sorting, pagination) => {
         const dataCopy = [ ...data ]
 
+        // Local filtering is handled here
+        const filteredData = dataCopy
+        setTotalRows(filteredData.length)
+
         const field = sorting.field
         const isAsc = sorting.direction === "ASC"
-        const sortedData = dataCopy.sort((a, b) => {
+        const sortedData = filteredData.sort((a, b) => {
             const sample = Number(a[field])
             if (!isNaN(sample) && isFinite(sample))
                 return Number((isAsc ? a : b)[field]) - Number((isAsc ? b : a)[field])
