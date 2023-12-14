@@ -145,6 +145,13 @@ const UrlCell: React.FC<{ value: string }> = ({ value }) => {
         </div>
     )
 }
+const ImageCell: React.FC<{ value: string }> = ({ value }) => {
+    return (
+        <div className='content'>
+            <img src={value} alt='table cell image' />
+        </div>
+    )
+}
 const NumberCell: React.FC<{ value: number }> = ({ value }) => {
     return (
         <div className='content'>
@@ -167,7 +174,10 @@ const Cell: React.FC<{ value: string | number | boolean | null }> = ({ value }) 
     let type: string = typeof value
     let improvedValue = value
     if (type === 'string') {
-        if (isUrl(value as string)) type = 'url'
+        if (isUrl(value as string)) {
+            if (imgExtensions.includes((value as string).split('.').pop() as string)) type = 'image'
+            else type = 'url'
+        }
         if (isBoolean(value as string)) {
             type = 'boolean'
             for (const key in potentialBooleans) {
@@ -185,6 +195,8 @@ const Cell: React.FC<{ value: string | number | boolean | null }> = ({ value }) 
                     switch (type) {
                         case 'string':
                         return <StringCell value={improvedValue as string} />
+                        case 'image':
+                        return <ImageCell value={improvedValue as string} />
                         case 'url':
                         return <UrlCell value={improvedValue as string} />
                         case 'number':
@@ -206,6 +218,7 @@ const potentialBooleans: Record<string, Array<string>> = {
     1: ['true', 'yes', 'affirmative'],
     0: ['false', 'no', 'not', 'negative']
 }
+const imgExtensions = ['png', 'jpg', 'jpeg', 'svg']
 const isBoolean = (value: string) => ([...potentialBooleans[1], ...potentialBooleans[0]].includes(value.toLowerCase()))
 
 const getColumnsWidths = (data: TableTypes.Data): Record<string, number> => {    

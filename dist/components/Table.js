@@ -94,32 +94,71 @@ var StringCell = function (_a) {
     var value = _a.value;
     return (React.createElement("div", { className: 'content' }, value));
 };
+var UrlCell = function (_a) {
+    var value = _a.value;
+    return (React.createElement("div", { className: 'content' },
+        React.createElement("a", { href: value }, "LINK")));
+};
+var ImageCell = function (_a) {
+    var value = _a.value;
+    return (React.createElement("div", { className: 'content' },
+        React.createElement("img", { src: value, alt: 'table cell image' })));
+};
 var NumberCell = function (_a) {
     var value = _a.value;
     return (React.createElement("div", { className: 'content' }, value));
 };
 var BooleanCell = function (_a) {
     var value = _a.value;
-    return (React.createElement("div", { className: 'content' }, value ? 'Yes' : 'No'));
+    return (React.createElement("div", { className: 'content' }, value ? '✓' : 'x'));
 };
 var Cell = function (_a) {
     var value = _a.value;
     if (value === null)
         return React.createElement("div", { className: 'rows cell empty' });
+    var type = typeof value;
+    var improvedValue = value;
+    if (type === 'string') {
+        if (isUrl(value)) {
+            if (imgExtensions.includes(value.split('.').pop()))
+                type = 'image';
+            else
+                type = 'url';
+        }
+        if (isBoolean(value)) {
+            type = 'boolean';
+            for (var key in potentialBooleans) {
+                if (potentialBooleans[key].includes(value)) {
+                    improvedValue = !!key;
+                }
+            }
+        }
+    }
     return (React.createElement("div", { className: 'rows cell' }, (function () {
-        switch (typeof value) {
+        switch (type) {
             case 'string':
-                return React.createElement(StringCell, { value: value });
+                return React.createElement(StringCell, { value: improvedValue });
+            case 'image':
+                return React.createElement(ImageCell, { value: improvedValue });
+            case 'url':
+                return React.createElement(UrlCell, { value: improvedValue });
             case 'number':
-                return React.createElement(NumberCell, { value: value });
+                return React.createElement(NumberCell, { value: improvedValue });
             case 'boolean':
-                return React.createElement(BooleanCell, { value: value });
+                return React.createElement(BooleanCell, { value: improvedValue });
             default:
                 return null;
         }
     })()));
 };
 var isPrimitive = function (value) { return (typeof value !== 'object' || value === null) && typeof value !== 'function'; };
+var isUrl = function (value) { return (/^(ftp|http|https):\/\/[^ "]+$/.test(value)); };
+var potentialBooleans = {
+    1: ['true', 'yes', 'affirmative'],
+    0: ['false', 'no', 'not', 'negative']
+};
+var imgExtensions = ['png', 'jpg', 'jpeg', 'svg'];
+var isBoolean = function (value) { return (__spreadArray(__spreadArray([], potentialBooleans[1], true), potentialBooleans[0], true).includes(value.toLowerCase())); };
 var getColumnsWidths = function (data) {
     var total = 0;
     var columnWidths = {};
@@ -180,9 +219,12 @@ var Table = function (_a) {
     }, [sorting]);
     var sortData = useCallback(function (sorting, pagination) {
         var dataCopy = __spreadArray([], data, true);
+        // Local filtering is handled here
+        var filteredData = dataCopy;
+        setTotalRows(filteredData.length);
         var field = sorting.field;
         var isAsc = sorting.direction === "ASC";
-        var sortedData = dataCopy.sort(function (a, b) {
+        var sortedData = filteredData.sort(function (a, b) {
             var sample = Number(a[field]);
             if (!isNaN(sample) && isFinite(sample))
                 return Number((isAsc ? a : b)[field]) - Number((isAsc ? b : a)[field]);
